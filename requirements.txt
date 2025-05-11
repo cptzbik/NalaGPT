@@ -1,4 +1,1 @@
 openai
-dotenv
-json
-pathlib

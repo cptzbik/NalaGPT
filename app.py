@@ -23,11 +23,10 @@ env = dotenv_values(".env")
 
 
 if "OPENAI_API_KEY" not in env:
-    st.warning("Nie znaleziono pliku .env z kluczem API OpenAI. Wprowadź klucz poniżej:")
-    api_key = st.text_input("Klucz API OpenAI", type="password")
+    st.warning("Nie znaleziono pliku .env ani klucza API OpenAI.")
+    api_key = st.text_input("Podaj swój klucz API OpenAI:", type="password")
     if api_key:
         env["OPENAI_API_KEY"] = api_key
-        st.stop()
 
 openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])        
 

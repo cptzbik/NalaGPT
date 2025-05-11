@@ -27,9 +27,6 @@ if "OPENAI_API_KEY" not in env:
     api_key = st.text_input("Klucz API OpenAI", type="password")
     if api_key:
         env["OPENAI_API_KEY"] = api_key
-        with open(".env", "w") as f:
-            f.write(f"OPENAI_API_KEY={api_key}")
-        st.success("Klucz API zapisany. Uruchom ponownie aplikację.")
         st.stop()
 
 openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])        

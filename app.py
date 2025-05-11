@@ -20,8 +20,19 @@ PRICING = model_pricings[MODEL]
 
 env = dotenv_values(".env")
 
-openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])
 
+
+if "OPENAI_API_KEY" not in env:
+    st.warning("Nie znaleziono pliku .env z kluczem API OpenAI. Wprowadź klucz poniżej:")
+    api_key = st.text_input("Klucz API OpenAI", type="password")
+    if api_key:
+        env["OPENAI_API_KEY"] = api_key
+        with open(".env", "w") as f:
+            f.write(f"OPENAI_API_KEY={api_key}")
+        st.success("Klucz API zapisany. Uruchom ponownie aplikację.")
+        st.stop()
+
+openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])        
 
 #CHATBOT
 

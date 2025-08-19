@@ -60,40 +60,53 @@ openai_client = OpenAI(api_key=api_key)
 #CHATBOT
 
 def get_chatbot_reply(user_prompt, memory):
-    #dodaj system message
-    messages = [
-        {
-            "role": "system",
-            "content": st.session_state["chatbot_personality"],
-        },
-            
-    ]
-    #dodaj wszystkie wiadomosci z pamięci
-    for message in memory:
-        messages.append({
-            "role": message["role"],
-            "content": message["content"]
-        })
-    #dodaj wiadomości użytkownika
-    messages.append({"role": "user", "content": user_prompt})
+    try:
+        #dodaj system message
+        messages = [
+            {
+                "role": "system",
+                "content": st.session_state["chatbot_personality"],
+            },
+                
+        ]
+        #dodaj wszystkie wiadomosci z pamięci
+        for message in memory:
+            messages.append({
+                "role": message["role"],
+                "content": message["content"]
+            })
+        #dodaj wiadomości użytkownika
+        messages.append({"role": "user", "content": user_prompt})
 
-    response = openai_client.chat.completions.create(
-        model=MODEL,
-        messages=messages
-    )
-    usage = {}
-    if response.usage:
-        usage = {
-            "completion_tokens": response.usage.completion_tokens,
-            "prompt_tokens": response.usage.prompt_tokens,
-            "total_tokens": response.usage.total_tokens,
+        response = openai_client.chat.completions.create(
+            model=MODEL,
+            messages=messages
+        )
+        usage = {}
+        if response.usage:
+            usage = {
+                "completion_tokens": response.usage.completion_tokens,
+                "prompt_tokens": response.usage.prompt_tokens,
+                "total_tokens": response.usage.total_tokens,
+            }
+
+        return{
+            "role": "assistant",
+            "content": response.choices[0].message.content,
+            "usage": usage,
         }
-
-    return{
-        "role": "assistant",
-        "content": response.choices[0].message.content,
-        "usage": usage,
-    }
+    except Exception as e:
+        st.error(f"Błąd podczas komunikacji z OpenAI: {str(e)}")
+        # Resetuj klucz API jeśli wystąpi błąd autoryzacji
+        if "AuthenticationError" in str(e) or "401" in str(e):
+            if "openai_api_key" in st.session_state:
+                del st.session_state["openai_api_key"]
+            st.rerun()
+        return {
+            "role": "assistant",
+            "content": "Przepraszam, wystąpił błąd. Spróbuj ponownie lub zresetuj klucz API.",
+            "usage": {}
+        }
 
 #Historia konwersacja i baza danych
 
@@ -270,6 +283,13 @@ if prompt:
 
 with st.sidebar:
     st.write("Aktualny model", MODEL)
+    
+    # Dodaj przycisk do resetowania klucza API
+    if st.button("Resetuj klucz API"):
+        if "openai_api_key" in st.session_state:
+            del st.session_state["openai_api_key"]
+        st.rerun()
+    
     total_cost = 0
     for message in st.session_state.get("messages") or []:
         if "usage" in message:

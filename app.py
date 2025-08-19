@@ -21,13 +21,19 @@ PRICING = model_pricings[MODEL]
 
 # Sprawdzanie klucza API OpenAI
 def get_openai_api_key():
+    # Sprawdź czy klucz jest już zapisany w session state
+    if "openai_api_key" in st.session_state and st.session_state["openai_api_key"]:
+        return st.session_state["openai_api_key"]
+    
     # Sprawdź czy istnieje plik .env
     if os.path.exists(".env"):
         env = dotenv_values(".env")
         if "OPENAI_API_KEY" in env and env["OPENAI_API_KEY"]:
+            # Zapisz klucz w session state
+            st.session_state["openai_api_key"] = env["OPENAI_API_KEY"]
             return env["OPENAI_API_KEY"]
     
-    # Jeśli nie ma pliku .env lub klucza, poproś użytkownika
+    # Jeśli nie ma klucza, poproś użytkownika
     st.warning("Nie znaleziono pliku .env z kluczem API OpenAI.")
     st.info("Aby aplikacja działała, musisz podać swój klucz API OpenAI.")
     
@@ -37,7 +43,11 @@ def get_openai_api_key():
         help="Klucz API możesz uzyskać na stronie https://platform.openai.com/api-keys"
     )
     
-    if not api_key:
+    if api_key:
+        # Zapisz klucz w session state
+        st.session_state["openai_api_key"] = api_key
+        st.rerun()  # Przeładuj aplikację żeby ukryć pole wpisywania
+    else:
         st.error("Klucz API jest wymagany do działania aplikacji.")
         st.stop()
     
@@ -45,7 +55,7 @@ def get_openai_api_key():
 
 # Pobierz klucz API
 api_key = get_openai_api_key()
-openai_client = OpenAI(api_key=api_key)        
+openai_client = OpenAI(api_key=api_key)       
 
 #CHATBOT
 

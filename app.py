@@ -3,6 +3,7 @@ from openai import OpenAI
 from dotenv import dotenv_values
 import json
 from pathlib import Path
+import os
 
 model_pricings = {
     "gpt-4o": {
@@ -18,17 +19,33 @@ MODEL = "gpt-4o"
 USD_TO_PLN = 3.97
 PRICING = model_pricings[MODEL]
 
-env = dotenv_values(".env")
+# Sprawdzanie klucza API OpenAI
+def get_openai_api_key():
+    # Sprawdź czy istnieje plik .env
+    if os.path.exists(".env"):
+        env = dotenv_values(".env")
+        if "OPENAI_API_KEY" in env and env["OPENAI_API_KEY"]:
+            return env["OPENAI_API_KEY"]
+    
+    # Jeśli nie ma pliku .env lub klucza, poproś użytkownika
+    st.warning("Nie znaleziono pliku .env z kluczem API OpenAI.")
+    st.info("Aby aplikacja działała, musisz podać swój klucz API OpenAI.")
+    
+    api_key = st.text_input(
+        "Podaj swój klucz API OpenAI:", 
+        type="password",
+        help="Klucz API możesz uzyskać na stronie https://platform.openai.com/api-keys"
+    )
+    
+    if not api_key:
+        st.error("Klucz API jest wymagany do działania aplikacji.")
+        st.stop()
+    
+    return api_key
 
-
-
-if "OPENAI_API_KEY" not in env:
-    st.warning("Nie znaleziono pliku .env ani klucza API OpenAI.")
-    api_key = st.text_input("Podaj swój klucz API OpenAI:", type="password")
-    if api_key:
-        env["OPENAI_API_KEY"] = api_key
-
-openai_client = OpenAI(api_key=env["OPENAI_API_KEY"])        
+# Pobierz klucz API
+api_key = get_openai_api_key()
+openai_client = OpenAI(api_key=api_key)        
 
 #CHATBOT
 
@@ -280,11 +297,12 @@ with st.sidebar:
         create_new_conversation()
 
     # pokazujemy tylko top 5 konwersacji
-    for conversation in sorted_conversations[:5]:
-        c0, c1 = st.columns([10, 5])
+    for conversation in sorted_conversations[:10]:
+        c0, c1 = st.columns([10, 10])
         with c0:
             st.write(conversation["name"])
 
         with c1:
             if st.button("załaduj", key=conversation["id"], disabled=conversation["id"] == st.session_state["id"]):
                 switch_conversation(conversation["id"])                                 
+
